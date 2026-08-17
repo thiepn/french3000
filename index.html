@@ -2992,6 +2992,29 @@ html[data-ui-theme="crimson-night"]{--paper:#18080b;--paper-2:#2d1016;--ink:#fae
     }
   </style>
 
+  <style id="v417-response-dock-bugfix">
+    /* v4.1.7 — confirmed mobile response-dock defect.
+       Delayed-reinforcement guidance is injected after the response dock is
+       built. In v4.1.6 it became a flex sibling of the rating grid, shrinking
+       the ratings and shifting the thumb targets to the right. Keep the note
+       visually above the rail and completely out of its horizontal layout. */
+    @media (max-width:760px), (max-width:1000px) and (max-height:560px) and (orientation:landscape){
+      body.v383-study-active .v383-response-dock>.v394-reinforcement-note{
+        position:absolute!important;
+        left:0;
+        right:0;
+        bottom:calc(100% + .32rem);
+        width:min(32rem,calc(100vw - 1rem))!important;
+        margin:0 auto!important;
+        padding:.5rem .68rem!important;
+        box-sizing:border-box;
+        z-index:1;
+        pointer-events:none;
+        box-shadow:0 8px 24px color-mix(in srgb,var(--ink) 9%,transparent);
+      }
+    }
+  </style>
+
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -3048,8 +3071,8 @@ html[data-ui-theme="crimson-night"]{--paper:#18080b;--paper-2:#2d1016;--ink:#fae
   (() => {
     'use strict';
 
-    const APP_VERSION = '4.1.6';
-    const APP_RELEASE = 'Mobile Study Ergonomics';
+    const APP_VERSION = '4.1.7';
+    const APP_RELEASE = 'Mobile Response Dock Bug Fix';
     const DATA_SCHEMA = 3;
     const PINNED_BLOB_SHA = '14beb3f21e908a471fe213c99ebc776bd11a5222';
     const SOURCE_ENDPOINTS = [
@@ -14242,6 +14265,7 @@ qui	who	A1	question word`;
        geometry. No scheduler, content, storage, or study behavior changes.
        ================================================================ */
     document.documentElement.dataset.mobileStudyErgonomics='v416';
+    document.documentElement.dataset.mobileResponseDockFix='v417';
 
     function v380BootAudit(){
       const required=[renderDashboard,renderStudy,renderProgress,renderSettings,renderBrowse,renderLearned,setView,init];
