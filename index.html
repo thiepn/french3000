@@ -3071,8 +3071,8 @@ html[data-ui-theme="crimson-night"]{--paper:#18080b;--paper-2:#2d1016;--ink:#fae
   (() => {
     'use strict';
 
-    const APP_VERSION = '4.1.7';
-    const APP_RELEASE = 'Mobile Response Dock Bug Fix';
+    const APP_VERSION = '4.1.8';
+    const APP_RELEASE = 'Words Performance Bug Fix';
     const DATA_SCHEMA = 3;
     const PINNED_BLOB_SHA = '14beb3f21e908a471fe213c99ebc776bd11a5222';
     const SOURCE_ENDPOINTS = [
@@ -14266,6 +14266,73 @@ qui	who	A1	question word`;
        ================================================================ */
     document.documentElement.dataset.mobileStudyErgonomics='v416';
     document.documentElement.dataset.mobileResponseDockFix='v417';
+
+
+    /* ================================================================
+       v4.1.8 WORDS PERFORMANCE BUG FIX
+       Confirmed defect: the Words row renderer invoked the full release/lexical
+       audit twice per visible row. BF3/BF4 made that audit intentionally deeper,
+       so a 50-row mobile page could synchronously repeat the catalog QA around
+       one hundred times. Cache the final audit wrapper and, more importantly,
+       render per-row QA markers from the already-computed release report.
+       ================================================================ */
+    const V418_VERSION=APP_VERSION;
+    const V418_RELEASE=APP_RELEASE;
+    const v418AuditRefIds=new WeakMap();
+    let v418AuditRefSeq=0;
+    let v418FinalAuditCache={signature:'',report:null};
+    let v418FlaggedCache={ids:null,set:new Set()};
+
+    function v418RefToken(value){
+      if(!value||typeof value!=='object')return '';
+      if(!v418AuditRefIds.has(value))v418AuditRefIds.set(value,++v418AuditRefSeq);
+      return String(v418AuditRefIds.get(value));
+    }
+    function v418AuditSignature(){
+      return [
+        v418RefToken(state.baseCards),
+        v418RefToken(state.cards),
+        state.baseCards?.length||0,
+        state.cards?.length||0,
+        Object.keys(state.userCards||{}).length,
+        Object.keys(state.cardEdits||{}).length,
+        Object.keys(state.progress||{}).length,
+        String(state.loadSource||''),
+        String(state.dataMeta?.generatedAt||''),
+        String(state.dataMeta?.fingerprint||state.dataMeta?.sourceFingerprint||'')
+      ].join('|');
+    }
+
+    const v418BuildAuditBase=v396BuildAudit;
+    v396BuildAudit=function(force=false){
+      const signature=v418AuditSignature();
+      if(!force&&v396AuditCache&&v418FinalAuditCache.report&&v418FinalAuditCache.signature===signature)return v418FinalAuditCache.report;
+      const report=v418BuildAuditBase(force);
+      v418FinalAuditCache={signature,report};
+      return report;
+    };
+
+    function v418FlaggedIds(){
+      const current=state.v396ReleaseAudit?.flaggedIds;
+      if(Array.isArray(current))return current;
+      return v396BuildAudit().flaggedIds||[];
+    }
+    v396FlaggedSet=function(){
+      const ids=v418FlaggedIds();
+      if(v418FlaggedCache.ids!==ids)v418FlaggedCache={ids,set:new Set(ids)};
+      return v418FlaggedCache.set;
+    };
+
+    /* Replace only the v3.9.6 QA wrapper. v396SimpleWordRowBase already
+       contains the later lexical-display row implementation; no visual,
+       filtering, progress, starring, or study behavior is changed. */
+    v381SimpleWordRow=function(card){
+      let html=v396SimpleWordRowBase(card);
+      if(v396FlaggedSet().has(card.id))html=html.replace('<article class="v381-word-row"','<article class="v381-word-row" data-v396-review="true"');
+      return html;
+    };
+
+    document.documentElement.dataset.wordsPerformanceFix='v418';
 
     function v380BootAudit(){
       const required=[renderDashboard,renderStudy,renderProgress,renderSettings,renderBrowse,renderLearned,setView,init];
